@@ -198,12 +198,15 @@ class _FeedScreenState extends State<FeedScreen> {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.logout, size: 20),
+            icon: const Icon(Icons.person_outline, size: 20),
             onPressed: () async {
               await Supabase.instance.client.auth.signOut();
               if (mounted) {
-                Navigator.pushReplacement(context,
-                    MaterialPageRoute(builder: (_) => const AuthScreen()));
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AuthScreen()),
+                      (route) => false,
+                );
               }
             },
           ),

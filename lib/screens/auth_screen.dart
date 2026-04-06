@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../theme/app_theme.dart';
 import 'profile_setup_screen.dart';
-import 'feed_screen.dart';
+import '../main.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -28,7 +28,7 @@ class _AuthScreenState extends State<AuthScreen> {
         );
         if (res.user != null && mounted) {
           Navigator.pushReplacement(context,
-              MaterialPageRoute(builder: (_) => const FeedScreen()));
+              MaterialPageRoute(builder: (_) => const HomeShell()));
         }
       } else {
         final res = await Supabase.instance.client.auth.signUp(
