@@ -27,22 +27,17 @@ class _FeedScreenState extends State<FeedScreen> {
     _loadFeed();
   }
 
+  // UPDATED: Now fetches only live data from Spring Boot
   Future<void> _loadFeed() async {
     setState(() => _isLoading = true);
     final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) return;
+    if (user == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
 
     final matches = await ApiService().getFeed(user.id,
         onlineMode: _onlineMode);
-
-    // If no matches from API yet, show demo cards for Eval 1
-    if (matches.isEmpty) {
-      setState(() {
-        _matches = _getDemoMatches();
-        _isLoading = false;
-      });
-      return;
-    }
 
     setState(() {
       _matches = matches;
@@ -51,82 +46,21 @@ class _FeedScreenState extends State<FeedScreen> {
     });
   }
 
-  List<MatchModel> _getDemoMatches() {
-    return [
-      MatchModel(
-        synergyScore: 92,
-        matchingSkills: ['Python', 'React'],
-        complementarySkills: ['UI/UX', 'Figma'],
-        profile: ProfileModel(
-          id: '1',
-          fullName: 'Priya Sharma',
-          githubUsername: 'priyasharma',
-          bio: 'Full stack dev. Love building products that matter.',
-          location: 'Bangalore',
-          primaryRole: 'Hacker',
-          isVerified: true,
-          avatarUrl: '',
-          synergyScore: 92,
-          skills: [
-            SkillModel(skillName: 'Python', isGithubVerified: true, proficiency: 8),
-            SkillModel(skillName: 'React', isGithubVerified: true, proficiency: 6),
-            SkillModel(skillName: 'FastAPI', isGithubVerified: true, proficiency: 4),
-          ],
-        ),
-      ),
-      MatchModel(
-        synergyScore: 85,
-        matchingSkills: ['Figma'],
-        complementarySkills: ['Java', 'Spring'],
-        profile: ProfileModel(
-          id: '2',
-          fullName: 'Arjun Mehta',
-          githubUsername: 'arjunmehta',
-          bio: 'Designer who codes. Ex-Razorpay intern.',
-          location: 'Mumbai',
-          primaryRole: 'Hipster',
-          isVerified: false,
-          avatarUrl: '',
-          synergyScore: 85,
-          skills: [
-            SkillModel(skillName: 'Figma', isGithubVerified: false),
-            SkillModel(skillName: 'Flutter', isGithubVerified: true, proficiency: 3),
-            SkillModel(skillName: 'CSS', isGithubVerified: true, proficiency: 5),
-          ],
-        ),
-      ),
-      MatchModel(
-        synergyScore: 78,
-        matchingSkills: ['Business'],
-        complementarySkills: ['ML', 'Python'],
-        profile: ProfileModel(
-          id: '3',
-          fullName: 'Sneha Gupta',
-          githubUsername: 'snehagupta',
-          bio: 'MBA + CS. Building the next unicorn.',
-          location: 'Delhi',
-          primaryRole: 'Hustler',
-          isVerified: false,
-          avatarUrl: '',
-          synergyScore: 78,
-          skills: [
-            SkillModel(skillName: 'Product', isGithubVerified: false),
-            SkillModel(skillName: 'Growth', isGithubVerified: false),
-            SkillModel(skillName: 'Python', isGithubVerified: true, proficiency: 2),
-          ],
-        ),
-      ),
-    ];
-  }
+  // REMOVED: _getDemoMatches() is gone. We only use live API data now.
 
   void _onSwipeLeft() {
     if (_currentIndex < _matches.length - 1) {
       setState(() => _currentIndex++);
+    } else {
+      setState(() => _currentIndex++); // Will trigger _buildAllSwiped()
     }
   }
 
+  // ... [Rest of your swipe and connect logic remains the same]
   void _onSwipeRight() {
-    _showConnectModal(_matches[_currentIndex]);
+    if (_currentIndex < _matches.length) {
+      _showConnectModal(_matches[_currentIndex]);
+    }
   }
 
   void _showConnectModal(MatchModel match) {
@@ -199,7 +133,7 @@ class _FeedScreenState extends State<FeedScreen> {
                 await ApiService().sendConnection(
                     user.id, match.profile.id, msgController.text);
                 if (ctx.mounted) Navigator.pop(ctx);
-                if (mounted) setState(() => _currentIndex++);
+                if (mounted) _onSwipeLeft();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,
@@ -240,7 +174,6 @@ class _FeedScreenState extends State<FeedScreen> {
           ],
         ),
         actions: [
-          // Online/Offline toggle
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: Row(
@@ -287,10 +220,10 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
+  // ... [The rest of the UI build methods remain exactly the same as your source]
   Widget _buildFeed() {
     return Column(
       children: [
-        // Progress indicator
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
@@ -319,8 +252,6 @@ class _FeedScreenState extends State<FeedScreen> {
             ],
           ),
         ),
-
-        // Card
         Expanded(
           child: Dismissible(
             key: Key(_matches[_currentIndex].profile.id),
@@ -369,8 +300,6 @@ class _FeedScreenState extends State<FeedScreen> {
             ),
           ),
         ),
-
-        // Action buttons
         Padding(
           padding: const EdgeInsets.all(20),
           child: Row(

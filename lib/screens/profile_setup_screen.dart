@@ -16,7 +16,22 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _nameController = TextEditingController();
   final _githubController = TextEditingController();
   final _bioController = TextEditingController();
-  final _locationController = TextEditingController();
+
+  // NEW: Dropdown state and city list
+  String _selectedCity = '';
+  static const List<String> _indianCities = [
+    'Ahmedabad','Bengaluru','Bhopal','Bhubaneswar','Chandigarh','Kharar',
+    'Chennai','Coimbatore','Dehradun','Delhi','Faridabad',
+    'Ghaziabad','Gurugram','Guwahati','Hyderabad','Indore',
+    'Jaipur','Jodhpur','Kanpur','Kochi','Kolkata',
+    'Kozhikode','Lucknow','Ludhiana','Madurai','Mangaluru',
+    'Mumbai','Mysuru','Nagpur','Nashik','Navi Mumbai',
+    'Noida','Patna','Pune','Raipur','Rajkot',
+    'Ranchi','Surat','Thiruvananthapuram','Thane','Udaipur',
+    'Vadodara','Varanasi','Vijayawada','Visakhapatnam','Agra',
+    'Amritsar','Aurangabad','Jabalpur','Jamshedpur','Meerut',
+  ];
+
   String _selectedRole = 'Hacker';
   bool _isLoading = false;
   bool _verifyingGithub = false;
@@ -39,8 +54,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   }
 
   Future<void> _saveProfile() async {
-    if (_nameController.text.isEmpty || _githubController.text.isEmpty) {
-      setState(() { _error = 'Name and GitHub username are required'; });
+    // UPDATED: Validation for _selectedCity
+    if (_nameController.text.isEmpty || _githubController.text.isEmpty || _selectedCity.isEmpty) {
+      setState(() { _error = 'Name, GitHub username, and city are required'; });
       return;
     }
     setState(() { _isLoading = true; _error = ''; });
@@ -51,12 +67,11 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         'full_name': _nameController.text.trim(),
         'github_username': _githubController.text.trim(),
         'bio': _bioController.text.trim(),
-        'location': _locationController.text.trim(),
+        'location': _selectedCity, // UPDATED: Using dropdown value
         'primary_role': _selectedRole,
         'is_verified': _detectedLanguages.isNotEmpty,
       });
 
-      // Save skills
       if (_detectedLanguages.isNotEmpty) {
         final skills = _detectedLanguages.entries.map((e) => {
           'user_id': user.id,
@@ -99,14 +114,43 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               const SizedBox(height: 24),
               _buildField(_nameController, 'Full Name', Icons.person_outline),
               const SizedBox(height: 16),
-              _buildField(_locationController, 'City / Location',
-                  Icons.location_on_outlined),
+
+              // NEW: Dropdown for City Selection
+              DropdownButtonFormField<String>(
+                value: _selectedCity.isEmpty ? null : _selectedCity,
+                decoration: InputDecoration(
+                  labelText: 'City',
+                  labelStyle: const TextStyle(color: AppTheme.textSecondary),
+                  prefixIcon: const Icon(Icons.location_on_outlined,
+                      color: AppTheme.textSecondary, size: 20),
+                  filled: true,
+                  fillColor: AppTheme.card,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+                  ),
+                ),
+                dropdownColor: AppTheme.card,
+                style: const TextStyle(color: AppTheme.textPrimary),
+                hint: const Text('Select your city',
+                    style: TextStyle(color: AppTheme.textSecondary)),
+                items: _indianCities.map((city) => DropdownMenuItem(
+                  value: city,
+                  child: Text(city),
+                )).toList(),
+                onChanged: (val) => setState(() => _selectedCity = val ?? ''),
+              ),
+
               const SizedBox(height: 16),
               _buildField(_bioController, 'Short Bio', Icons.info_outline,
                   maxLines: 2),
               const SizedBox(height: 24),
 
-              // Role selector
+              // ... [Rest of your UI remains the same]
               const Text('I am a...',
                   style: TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
               const SizedBox(height: 12),
@@ -142,8 +186,6 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                 }).toList(),
               ),
               const SizedBox(height: 24),
-
-              // GitHub verification
               const Text('GitHub Username',
                   style: TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
               const SizedBox(height: 8),
@@ -173,8 +215,6 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   ),
                 ],
               ),
-
-              // Detected languages
               if (_detectedLanguages.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 Container(
@@ -234,13 +274,11 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   ),
                 ),
               ],
-
               if (_error.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text(_error,
                     style: const TextStyle(color: AppTheme.danger, fontSize: 13)),
               ],
-
               const SizedBox(height: 32),
               SizedBox(
                 height: 52,
